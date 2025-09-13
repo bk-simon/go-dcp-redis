@@ -1,0 +1,31 @@
+hosts:
+  - localhost:8091
+username: user
+password: 123456
+bucketName: dcp-test
+rollbackMitigation:
+  disabled: true
+checkpoint:
+  type: manual
+dcp:
+  group:
+    name: groupName
+metadata:
+  type: couchbase
+  readOnly: true
+  config:
+    bucket: dcp-test
+    scope: _default
+    collection: _default
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
+  defaultTTL: 24h
+  collectionKeyMapping:
+    - collection: _default
+      keyPrefix: "doc:"
+      keySuffix: ""
+      storageType: "string"
+      ttl: 24h

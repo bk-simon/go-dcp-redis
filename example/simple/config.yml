@@ -1,0 +1,15 @@
+hosts:
+  - localhost:8091
+username: user
+password: 123456
+bucketName: dcp-test
+logging:
+  level: info
+dcp:
+  group:
+    name: groupName
+redis:
+  host: localhost
+  port: 6379
+  password: ""
+  db: 0
