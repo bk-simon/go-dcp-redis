@@ -2,7 +2,6 @@ package integration
 
 import (
 	"context"
-	"sync"
 	"testing"
 	"time"
 
@@ -25,49 +24,47 @@ func TestRedis(t *testing.T) {
 		return
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		connector.Start()
-	}()
+	// Start connector in a goroutine
+	go connector.Start()
 
-	time.Sleep(1 * time.Second)
+	// Wait a bit for connector to initialize
+	time.Sleep(2 * time.Second)
 
-	go func() {
-		redisClient, err := client.NewRedisClient(config.Redis{
-			Host:     "localhost",
-			Port:     6379,
-			Password: "",
-			DB:       0,
-		})
-		if err != nil {
-			t.Fatalf("could not open connection to redis %s", err)
-		}
+	// Create Redis client for testing
+	redisClient, err := client.NewRedisClient(config.Redis{
+		Host:     "localhost",
+		Port:     6379,
+		Password: "",
+		DB:       0,
+	})
+	if err != nil {
+		t.Fatalf("could not open connection to redis %s", err)
+	}
+	defer redisClient.Close()
 
-		ctx, _ := context.WithTimeout(context.Background(), 3*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
 
-	CountCheckLoop:
-		for {
-			select {
-			case <-ctx.Done():
-				t.Fatalf("deadline exceed")
-			default:
-				// Check if keys exist in Redis
-				keys, err := redisClient.Keys(ctx, "doc:*").Result()
-				if err != nil {
-					t.Fatalf("redis query error %s", err)
-				}
-				if len(keys) >= 100 { // Check for at least 100 keys
-					logger.Log.Info("done")
-					connector.Close()
-					break CountCheckLoop
-				}
-				time.Sleep(2 * time.Second)
+	// Check for keys periodically
+	for {
+		select {
+		case <-ctx.Done():
+			t.Fatalf("deadline exceeded - not enough keys found")
+		default:
+			// Check if keys exist in Redis
+			keys, err := redisClient.Keys(ctx, "doc:*").Result()
+			if err != nil {
+				t.Fatalf("redis query error %s", err)
 			}
+
+			logger.Log.Info("found %d keys", len(keys))
+
+			if len(keys) >= 100 { // Check for at least 100 keys
+				logger.Log.Info("test completed successfully - found %d keys", len(keys))
+				connector.Close()
+				return
+			}
+			time.Sleep(2 * time.Second)
 		}
-
-	}()
-
-	wg.Wait()
+	}
 }
