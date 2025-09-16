@@ -1,6 +1,6 @@
 module integration-test-example
 
-go 1.25.1
+go 1.24.0
 
 replace github.com/Trendyol/go-dcp-redis => ../../.
 
