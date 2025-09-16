@@ -8,7 +8,7 @@ import (
 	"github.com/Trendyol/go-dcp-redis/redis"
 )
 
-type Mapper func(event couchbase.Event) []redis.Model
+type Mapper func(ctx couchbase.Context) []redis.Model
 
 var (
 	collectionKeyMappings *[]config.CollectionKeyMapping
@@ -20,7 +20,8 @@ func SetCollectionKeyMappings(mappings *[]config.CollectionKeyMapping) {
 	mappingCache = make(map[string]config.CollectionKeyMapping)
 }
 
-func DefaultMapper(event couchbase.Event) []redis.Model {
+func DefaultMapper(ctx couchbase.Context) []redis.Model {
+	event := ctx.Event
 	if event.IsMutated {
 		mapping := findCollectionKeyMapping(event.CollectionName)
 		command := buildSetCommand(mapping, event)
@@ -61,7 +62,7 @@ func buildSetCommand(mapping config.CollectionKeyMapping, event couchbase.Event)
 		return redis.Raw{
 			Operation: "HSET",
 			Key:       key,
-			Args:      []interface{}{field, string(event.Value)},
+			Args:      []any{field, string(event.Value)},
 			TTL:       mapping.TTL,
 		}
 	case "json", "string":
@@ -88,7 +89,7 @@ func buildDeleteCommand(mapping config.CollectionKeyMapping, event couchbase.Eve
 		return redis.Raw{
 			Operation: "HDEL",
 			Key:       key,
-			Args:      []interface{}{field},
+			Args:      []any{field},
 		}
 	default:
 		return redis.Raw{

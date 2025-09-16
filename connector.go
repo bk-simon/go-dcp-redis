@@ -57,14 +57,41 @@ func (c *connector) listener(ctx *models.ListenerContext) {
 	listenerTrace := ctx.ListenerTracerComponent.InitializeListenerTrace("Listen", nil)
 	defer listenerTrace.Finish()
 
-	var e couchbase.Event
+	// Get redis conn
+	redisConn := c.bulk.GetRedisConnection()
+
+	var e couchbase.Context
 	switch event := ctx.Event.(type) {
 	case models.DcpMutation:
-		e = couchbase.NewMutateEvent(listenerTrace, event.Key, event.Value, event.CollectionName, event.EventTime, event.Cas, event.VbID)
+		params := couchbase.EventParams{
+			Key:            event.Key,
+			Value:          event.Value,
+			CollectionName: event.CollectionName,
+			EventTime:      event.EventTime,
+			Cas:            event.Cas,
+			VbID:           event.VbID,
+		}
+		e = couchbase.NewMutateEventContext(listenerTrace, redisConn, params)
 	case models.DcpExpiration:
-		e = couchbase.NewExpireEvent(listenerTrace, event.Key, nil, event.CollectionName, event.EventTime, event.Cas, event.VbID)
+		params := couchbase.EventParams{
+			Key:            event.Key,
+			Value:          nil,
+			CollectionName: event.CollectionName,
+			EventTime:      event.EventTime,
+			Cas:            event.Cas,
+			VbID:           event.VbID,
+		}
+		e = couchbase.NewExpireEventContext(listenerTrace, redisConn, params)
 	case models.DcpDeletion:
-		e = couchbase.NewDeleteEvent(listenerTrace, event.Key, nil, event.CollectionName, event.EventTime, event.Cas, event.VbID)
+		params := couchbase.EventParams{
+			Key:            event.Key,
+			Value:          nil,
+			CollectionName: event.CollectionName,
+			EventTime:      event.EventTime,
+			Cas:            event.Cas,
+			VbID:           event.VbID,
+		}
+		e = couchbase.NewDeleteEventContext(listenerTrace, redisConn, params)
 	default:
 		return
 	}
@@ -76,7 +103,7 @@ func (c *connector) listener(ctx *models.ListenerContext) {
 		return
 	}
 
-	c.bulk.AddActions(ctx, e.EventTime, actions)
+	c.bulk.AddActions(ctx, e.Event.EventTime, actions)
 }
 
 type ConnectorBuilder struct {

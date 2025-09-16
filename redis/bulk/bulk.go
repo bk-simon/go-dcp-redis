@@ -136,3 +136,7 @@ func (b *Bulk) PrepareEndRebalancing() {
 
 	b.isDcpRebalancing = false
 }
+
+func (b *Bulk) GetRedisConnection() *redisClient.Conn {
+	return b.redisClient.Conn()
+}
