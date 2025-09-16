@@ -11,14 +11,33 @@ import (
 	"github.com/Trendyol/go-dcp/logger"
 )
 
-type AirlineEvent struct {
-	name string
+func TestRedis(t *testing.T) {
+	testRedisConnection(t, "config.yml", config.Redis{
+		Host:     "localhost",
+		Port:     6379,
+		Password: "",
+		DB:       0,
+	})
 }
 
-func TestRedis(t *testing.T) {
+func TestRedisSentinel(t *testing.T) {
+	testRedisConnection(t, "config-sentinel.yml", config.Redis{
+		DB: 1, // Use different database to avoid conflicts
+		Sentinel: &config.RedisSentinel{
+			MasterName: "mymaster",
+			SentinelAddrs: []string{
+				"localhost:26379",
+				"localhost:26380",
+				"localhost:26381",
+			},
+		},
+	})
+}
+
+func testRedisConnection(t *testing.T, configFile string, redisConfig config.Redis) {
 	time.Sleep(time.Second * 30)
 
-	connector, err := dcpredis.NewConnectorBuilder("config.yml").Build()
+	connector, err := dcpredis.NewConnectorBuilder(configFile).Build()
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -31,12 +50,7 @@ func TestRedis(t *testing.T) {
 	time.Sleep(2 * time.Second)
 
 	// Create Redis client for testing
-	redisClient, err := client.NewRedisClient(config.Redis{
-		Host:     "localhost",
-		Port:     6379,
-		Password: "",
-		DB:       0,
-	})
+	redisClient, err := client.NewRedisClient(redisConfig)
 	if err != nil {
 		t.Fatalf("could not open connection to redis %s", err)
 	}

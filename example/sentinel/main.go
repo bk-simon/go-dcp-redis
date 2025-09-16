@@ -1,22 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"time"
-
 	dcpredis "github.com/Trendyol/go-dcp-redis"
 	"github.com/Trendyol/go-dcp-redis/couchbase"
 	"github.com/Trendyol/go-dcp-redis/redis"
 )
 
 func mapper(event couchbase.Context) []redis.Model {
-	var set = redis.Set{
-		Key:   fmt.Sprintf("doc:%s", string(event.Event.Key)),
-		Value: string(event.Event.Value),
-		TTL:   time.Hour * 24, // 24 hours TTL
+	if event.Event.IsMutated {
+		return []redis.Model{
+			&redis.Set{
+				Key:   string(event.Event.Key),
+				Value: event.Event.Value,
+			},
+		}
 	}
 
-	return []redis.Model{&set}
+	return []redis.Model{
+		&redis.Del{
+			Key: string(event.Event.Key),
+		},
+	}
 }
 
 func main() {

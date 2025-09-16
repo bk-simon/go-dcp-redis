@@ -1,0 +1,34 @@
+hosts:
+  - localhost:8091
+username: user
+password: 123456
+bucketName: dcp-test
+rollbackMitigation:
+  disabled: true
+checkpoint:
+  type: manual
+dcp:
+  group:
+    name: groupNameSentinel
+metadata:
+  type: couchbase
+  readOnly: true
+  config:
+    bucket: dcp-test
+    scope: _default
+    collection: _default
+redis:
+  db: 1
+  defaultTTL: 24h
+  sentinel:
+    masterName: mymaster
+    sentinelAddrs:
+      - localhost:26379
+      - localhost:26380
+      - localhost:26381
+  collectionKeyMapping:
+    - collection: _default
+      keyPrefix: "doc:"
+      keySuffix: ""
+      storageType: "string"
+      ttl: 24h
