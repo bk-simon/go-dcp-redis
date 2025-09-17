@@ -23,7 +23,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.24.0'
+          go-version: "1.24.0"
 
       - name: Start containers
         run: make compose
@@ -31,8 +31,14 @@ jobs:
       - name: Docker status
         run: sleep 60 && docker ps -a && docker logs go-dcp-redis-couchbase-1 && docker logs go-dcp-redis-redis-1
 
-      - name: Integration Test
-        run: cd test/integration && go test -v integration_test.go
+      - name: Wait for Sentinel
+        run: sleep 30 && docker logs go-dcp-redis-redis-sentinel-1-1 && docker logs go-dcp-redis-redis-sentinel-2-1 && docker logs go-dcp-redis-redis-sentinel-3-1
+
+      - name: Integration Test - Standalone Redis
+        run: cd test/integration && go test -v -run TestRedis integration_test.go
+
+      - name: Integration Test - Redis Sentinel
+        run: cd test/integration && go test -v -run TestRedisSentinel integration_test.go
         env:
           INPUT_PUBLISH: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

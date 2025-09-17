@@ -15,6 +15,14 @@ type Redis struct {
 	CollectionKeyMapping []CollectionKeyMapping `yaml:"collectionKeyMapping,omitempty"`
 	BatchTickerDuration  time.Duration          `yaml:"batchTickerDuration"`
 	DefaultTTL           time.Duration          `yaml:"defaultTTL"`
+	Sentinel             *RedisSentinel         `yaml:"sentinel,omitempty"`
+}
+
+type RedisSentinel struct {
+	MasterName    string   `yaml:"masterName"`
+	SentinelAddrs []string `yaml:"sentinelAddrs"`
+	Username      string   `yaml:"username,omitempty"`
+	Password      string   `yaml:"password,omitempty"`
 }
 
 type CollectionKeyMapping struct {
