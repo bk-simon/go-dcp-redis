@@ -2,6 +2,8 @@ module integration-test-example
 
 go 1.24.0
 
+toolchain go1.24.5
+
 replace github.com/Trendyol/go-dcp-redis => ../../.
 
 require (
