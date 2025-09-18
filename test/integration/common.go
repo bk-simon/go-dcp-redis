@@ -31,7 +31,15 @@ func testRedisConnection(t *testing.T, configFile string, redisConfig config.Red
 	if err != nil {
 		t.Fatalf("could not open connection to redis %s", err)
 	}
-	defer redisClient.Close()
+
+	// Ensure cleanup happens even if test fails
+	defer func() {
+		logger.Log.Info("starting cleanup process")
+		connector.Close()
+		time.Sleep(3 * time.Second) // Wait for connector to fully stop
+		redisClient.Close()
+		logger.Log.Info("cleanup completed")
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
@@ -52,10 +60,7 @@ func testRedisConnection(t *testing.T, configFile string, redisConfig config.Red
 
 			if len(keys) >= 100 { // Check for at least 100 keys
 				logger.Log.Info("test completed successfully - found %d keys", len(keys))
-				// Close connector first, then wait a bit for cleanup
-				connector.Close()
-				time.Sleep(1 * time.Second)
-				return
+				return // defer will handle cleanup
 			}
 			time.Sleep(2 * time.Second)
 		}
