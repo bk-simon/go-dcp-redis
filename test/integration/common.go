@@ -11,29 +11,6 @@ import (
 	"github.com/Trendyol/go-dcp/logger"
 )
 
-func TestRedis(t *testing.T) {
-	testRedisConnection(t, "config.yml", config.Redis{
-		Host:     "localhost",
-		Port:     6379,
-		Password: "",
-		DB:       0,
-	})
-}
-
-func TestRedisSentinel(t *testing.T) {
-	testRedisConnection(t, "config-sentinel.yml", config.Redis{
-		DB: 1, // Use different database to avoid conflicts
-		Sentinel: &config.RedisSentinel{
-			MasterName: "mymaster",
-			SentinelAddrs: []string{
-				"localhost:26379",
-				"localhost:26380",
-				"localhost:26381",
-			},
-		},
-	})
-}
-
 func testRedisConnection(t *testing.T, configFile string, redisConfig config.Redis) {
 	time.Sleep(time.Second * 30)
 
@@ -75,7 +52,9 @@ func testRedisConnection(t *testing.T, configFile string, redisConfig config.Red
 
 			if len(keys) >= 100 { // Check for at least 100 keys
 				logger.Log.Info("test completed successfully - found %d keys", len(keys))
+				// Close connector first, then wait a bit for cleanup
 				connector.Close()
+				time.Sleep(1 * time.Second)
 				return
 			}
 			time.Sleep(2 * time.Second)
