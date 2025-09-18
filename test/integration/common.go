@@ -35,9 +35,14 @@ func testRedisConnection(t *testing.T, configFile string, redisConfig config.Red
 	// Ensure cleanup happens even if test fails
 	defer func() {
 		logger.Log.Info("starting cleanup process")
+
+		// Close the connector and wait for all streams to stop
 		connector.Close()
-		time.Sleep(3 * time.Second) // Wait for connector to fully stop
-		redisClient.Close()
+		logger.Log.Info("connector closed, waiting for all operations to complete...")
+
+		// Wait longer for all DCP streams and Redis operations to fully complete
+		time.Sleep(10 * time.Second)
+
 		logger.Log.Info("cleanup completed")
 	}()
 
@@ -60,6 +65,11 @@ func testRedisConnection(t *testing.T, configFile string, redisConfig config.Red
 
 			if len(keys) >= 100 { // Check for at least 100 keys
 				logger.Log.Info("test completed successfully - found %d keys", len(keys))
+
+				// Wait a bit more to let any pending DCP events finish processing
+				logger.Log.Info("waiting for pending events to finish...")
+				time.Sleep(5 * time.Second)
+
 				return // defer will handle cleanup
 			}
 			time.Sleep(2 * time.Second)
