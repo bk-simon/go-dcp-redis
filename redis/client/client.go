@@ -35,17 +35,13 @@ func (c *clusterWrapper) Close() error {
 func NewRedisClient(cfg config.Redis) (RedisClient, error) {
 	var client RedisClient
 
-	// Check if Cluster configuration is provided
-	if cfg.Cluster != nil && len(cfg.Cluster.Addrs) > 0 {
-		clusterClient, err := newClusterClient(cfg)
-		if err != nil {
-			return nil, err
-		}
-		client = clusterClient
-	} else if cfg.Sentinel != nil && len(cfg.Sentinel.SentinelAddrs) > 0 {
-		// Check if Sentinel configuration is provided
+	// Check configuration type
+	switch {
+	case cfg.Cluster != nil && len(cfg.Cluster.Addrs) > 0:
+		client = newClusterClient(cfg)
+	case cfg.Sentinel != nil && len(cfg.Sentinel.SentinelAddrs) > 0:
 		client = newSentinelClient(cfg)
-	} else {
+	default:
 		client = newStandaloneClient(cfg)
 	}
 
@@ -96,7 +92,7 @@ func newSentinelClient(cfg config.Redis) RedisClient {
 	return &clientWrapper{redis.NewFailoverClient(options)}
 }
 
-func newClusterClient(cfg config.Redis) (RedisClient, error) {
+func newClusterClient(cfg config.Redis) RedisClient {
 	options := &redis.ClusterOptions{
 		Addrs: cfg.Cluster.Addrs,
 	}
@@ -121,5 +117,5 @@ func newClusterClient(cfg config.Redis) (RedisClient, error) {
 
 	clusterClient := redis.NewClusterClient(options)
 
-	return &clusterWrapper{clusterClient}, nil
+	return &clusterWrapper{clusterClient}
 }

@@ -12,10 +12,8 @@ func TestConnector_ApplyDefaults(t *testing.T) {
 		expected Connector
 	}{
 		{
-			name: "empty config gets defaults",
-			input: Connector{
-				Redis: Redis{},
-			},
+			name:  "empty config gets defaults",
+			input: Connector{Redis: Redis{}},
 			expected: Connector{
 				Redis: Redis{
 					Port:                6379,
@@ -24,12 +22,8 @@ func TestConnector_ApplyDefaults(t *testing.T) {
 			},
 		},
 		{
-			name: "custom port preserved",
-			input: Connector{
-				Redis: Redis{
-					Port: 6380,
-				},
-			},
+			name:  "custom port preserved",
+			input: Connector{Redis: Redis{Port: 6380}},
 			expected: Connector{
 				Redis: Redis{
 					Port:                6380,
@@ -41,9 +35,7 @@ func TestConnector_ApplyDefaults(t *testing.T) {
 			name: "collection key mapping storage type defaults to string",
 			input: Connector{
 				Redis: Redis{
-					CollectionKeyMapping: []CollectionKeyMapping{
-						{Collection: "test"},
-					},
+					CollectionKeyMapping: []CollectionKeyMapping{{Collection: "test"}},
 				},
 			},
 			expected: Connector{
@@ -71,8 +63,10 @@ func TestConnector_ApplyDefaults(t *testing.T) {
 			}
 
 			if len(tt.input.Redis.CollectionKeyMapping) > 0 {
-				if tt.input.Redis.CollectionKeyMapping[0].StorageType != tt.expected.Redis.CollectionKeyMapping[0].StorageType {
-					t.Errorf("StorageType = %s, want %s", tt.input.Redis.CollectionKeyMapping[0].StorageType, tt.expected.Redis.CollectionKeyMapping[0].StorageType)
+				actual := tt.input.Redis.CollectionKeyMapping[0].StorageType
+				expected := tt.expected.Redis.CollectionKeyMapping[0].StorageType
+				if actual != expected {
+					t.Errorf("StorageType = %s, want %s", actual, expected)
 				}
 			}
 		})
