@@ -1,0 +1,36 @@
+hosts:
+  - localhost:8091
+username: user
+password: 123456
+bucketName: dcp-test
+rollbackMitigation:
+  disabled: true
+checkpoint:
+  type: manual
+dcp:
+  group:
+    name: groupNameCluster
+metadata:
+  type: couchbase
+  readOnly: true
+  config:
+    bucket: dcp-test
+    scope: _default
+    collection: _default
+redis:
+  db: 0
+  defaultTTL: 24h
+  cluster:
+    addrs:
+      - localhost:7000
+      - localhost:7001
+      - localhost:7002
+      - localhost:7003
+      - localhost:7004
+      - localhost:7005
+  collectionKeyMapping:
+    - collection: _default
+      keyPrefix: "doc:"
+      keySuffix: ""
+      storageType: "string"
+      ttl: 24h

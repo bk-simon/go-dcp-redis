@@ -11,6 +11,7 @@ Redis in near real-time.
 - **Managing batch configurations** such as batch ticker durations.
 - **Multiple storage types** (string, hash, json) with TTL support.
 - **Redis Sentinel support** for high availability deployments.
+- **Redis Cluster support** for horizontal scaling and high availability.
 - **Scale up and down** by custom membership algorithms(Couchbase, KubernetesHa, Kubernetes StatefulSet or
   Static, see [examples](https://github.com/Trendyol/go-dcp#examples)).
 - **Easily manageable configurations**.
@@ -135,6 +136,23 @@ redis:
     password: ""
 ```
 
+### Redis Cluster Configuration
+
+```yaml
+redis:
+  cluster:
+    addrs:
+      - localhost:7000
+      - localhost:7001
+      - localhost:7002
+      - localhost:7003
+      - localhost:7004
+      - localhost:7005
+    routeByLatency: false
+    routeRandomly: false
+    readOnly: false
+```
+
 ### Dcp Configuration
 
 Check out on [go-dcp](https://github.com/Trendyol/go-dcp#configuration)
@@ -152,6 +170,7 @@ Check out on [go-dcp](https://github.com/Trendyol/go-dcp#configuration)
 | `redis.batchTickerDuration`  | time.Duration          | no       | 10s     | Batch is being flushed automatically at specific time intervals for long waiting messages in batch |
 | `redis.collectionKeyMapping` | []CollectionKeyMapping | no       |         | Will be used for default mapper. Please read the next topic.                                       |
 | `redis.sentinel`             | RedisSentinel          | no       |         | Redis Sentinel configuration for high availability                                                 |
+| `redis.cluster`              | RedisCluster           | no       |         | Redis Cluster configuration for horizontal scaling                                                 |
 
 ### Redis Sentinel Configuration
 
@@ -161,6 +180,17 @@ Check out on [go-dcp](https://github.com/Trendyol/go-dcp#configuration)
 | `redis.sentinel.sentinelAddrs` | []string | yes      |         | List of Sentinel addresses (host:port)                            |
 | `redis.sentinel.username`      | string   | no       |         | Sentinel-specific username (overrides redis.username if provided) |
 | `redis.sentinel.password`      | string   | no       |         | Sentinel-specific password (overrides redis.password if provided) |
+
+### Redis Cluster Configuration
+
+| Variable                     | Type     | Required | Default | Description                                                         |
+| ---------------------------- | -------- | -------- | ------- | ------------------------------------------------------------------- |
+| `redis.cluster.addrs`        | []string | yes      |         | List of Redis Cluster node addresses (host:port)                    |
+| `redis.cluster.username`     | string   | no       |         | Cluster-specific username (overrides redis.username if provided)    |
+| `redis.cluster.password`     | string   | no       |         | Cluster-specific password (overrides redis.password if provided)    |
+| `redis.cluster.routeByLatency` | bool   | no       | false   | Route commands to the node with lowest latency                      |
+| `redis.cluster.routeRandomly`  | bool   | no       | false   | Route commands randomly to distribute load                          |
+| `redis.cluster.readOnly`       | bool   | no       | false   | Allow read operations on replica nodes                              |
 
 ### Collection Key Mapping Configuration
 

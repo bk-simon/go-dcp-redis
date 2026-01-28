@@ -28,10 +28,10 @@ type EventParams struct {
 	VbID           uint16
 }
 
-func NewDeleteEventContext(listenerTrace tracing.ListenerTrace, redisConn *redis.Conn, params EventParams) Context {
+func NewDeleteEventContext(listenerTrace tracing.ListenerTrace, redisClient redis.Cmdable, params EventParams) Context {
 	return Context{
-		Tracer:    listenerTrace,
-		RedisConn: redisConn,
+		Tracer:      listenerTrace,
+		RedisClient: redisClient,
 		Event: Event{
 			Key:            params.Key,
 			Value:          params.Value,
@@ -44,10 +44,10 @@ func NewDeleteEventContext(listenerTrace tracing.ListenerTrace, redisConn *redis
 	}
 }
 
-func NewExpireEventContext(listenerTrace tracing.ListenerTrace, redisConn *redis.Conn, params EventParams) Context {
+func NewExpireEventContext(listenerTrace tracing.ListenerTrace, redisClient redis.Cmdable, params EventParams) Context {
 	return Context{
-		Tracer:    listenerTrace,
-		RedisConn: redisConn,
+		Tracer:      listenerTrace,
+		RedisClient: redisClient,
 		Event: Event{
 			Key:            params.Key,
 			Value:          params.Value,
@@ -60,10 +60,10 @@ func NewExpireEventContext(listenerTrace tracing.ListenerTrace, redisConn *redis
 	}
 }
 
-func NewMutateEventContext(listenerTrace tracing.ListenerTrace, redisConn *redis.Conn, params EventParams) Context {
+func NewMutateEventContext(listenerTrace tracing.ListenerTrace, redisClient redis.Cmdable, params EventParams) Context {
 	return Context{
-		Tracer:    listenerTrace,
-		RedisConn: redisConn,
+		Tracer:      listenerTrace,
+		RedisClient: redisClient,
 		Event: Event{
 			Key:            params.Key,
 			Value:          params.Value,

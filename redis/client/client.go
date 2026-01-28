@@ -8,11 +8,42 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func NewRedisClient(cfg config.Redis) (*redis.Client, error) {
-	var client *redis.Client
+// RedisClient is an interface that covers both single and cluster Redis clients
+type RedisClient interface {
+	redis.Cmdable
+	Close() error
+}
 
-	// Check if Sentinel configuration is provided
-	if cfg.Sentinel != nil && len(cfg.Sentinel.SentinelAddrs) > 0 {
+// clientWrapper wraps a *redis.Client to implement RedisClient
+type clientWrapper struct {
+	*redis.Client
+}
+
+func (c *clientWrapper) Close() error {
+	return c.Client.Close()
+}
+
+// clusterWrapper wraps a *redis.ClusterClient to implement RedisClient
+type clusterWrapper struct {
+	*redis.ClusterClient
+}
+
+func (c *clusterWrapper) Close() error {
+	return c.ClusterClient.Close()
+}
+
+func NewRedisClient(cfg config.Redis) (RedisClient, error) {
+	var client RedisClient
+
+	// Check if Cluster configuration is provided
+	if cfg.Cluster != nil && len(cfg.Cluster.Addrs) > 0 {
+		clusterClient, err := newClusterClient(cfg)
+		if err != nil {
+			return nil, err
+		}
+		client = clusterClient
+	} else if cfg.Sentinel != nil && len(cfg.Sentinel.SentinelAddrs) > 0 {
+		// Check if Sentinel configuration is provided
 		client = newSentinelClient(cfg)
 	} else {
 		client = newStandaloneClient(cfg)
@@ -28,7 +59,7 @@ func NewRedisClient(cfg config.Redis) (*redis.Client, error) {
 	return client, nil
 }
 
-func newStandaloneClient(cfg config.Redis) *redis.Client {
+func newStandaloneClient(cfg config.Redis) RedisClient {
 	options := &redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
 		Password: cfg.Password,
@@ -39,10 +70,10 @@ func newStandaloneClient(cfg config.Redis) *redis.Client {
 		options.Username = cfg.Username
 	}
 
-	return redis.NewClient(options)
+	return &clientWrapper{redis.NewClient(options)}
 }
 
-func newSentinelClient(cfg config.Redis) *redis.Client {
+func newSentinelClient(cfg config.Redis) RedisClient {
 	options := &redis.FailoverOptions{
 		MasterName:    cfg.Sentinel.MasterName,
 		SentinelAddrs: cfg.Sentinel.SentinelAddrs,
@@ -62,5 +93,33 @@ func newSentinelClient(cfg config.Redis) *redis.Client {
 		options.Password = cfg.Password
 	}
 
-	return redis.NewFailoverClient(options)
+	return &clientWrapper{redis.NewFailoverClient(options)}
+}
+
+func newClusterClient(cfg config.Redis) (RedisClient, error) {
+	options := &redis.ClusterOptions{
+		Addrs: cfg.Cluster.Addrs,
+	}
+
+	// Use Cluster specific credentials if provided, otherwise fall back to Redis config
+	if cfg.Cluster.Username != "" {
+		options.Username = cfg.Cluster.Username
+	} else if cfg.Username != "" {
+		options.Username = cfg.Username
+	}
+
+	if cfg.Cluster.Password != "" {
+		options.Password = cfg.Cluster.Password
+	} else if cfg.Password != "" {
+		options.Password = cfg.Password
+	}
+
+	// Set routing options
+	options.RouteByLatency = cfg.Cluster.RouteByLatency
+	options.RouteRandomly = cfg.Cluster.RouteRandomly
+	options.ReadOnly = cfg.Cluster.ReadOnly
+
+	clusterClient := redis.NewClusterClient(options)
+
+	return &clusterWrapper{clusterClient}, nil
 }
