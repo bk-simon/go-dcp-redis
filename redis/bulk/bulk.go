@@ -10,11 +10,10 @@ import (
 	"github.com/Trendyol/go-dcp-redis/redis/client"
 	"github.com/Trendyol/go-dcp/logger"
 	"github.com/Trendyol/go-dcp/models"
-	redisClient "github.com/redis/go-redis/v9"
 )
 
 type Bulk struct {
-	redisClient         *redisClient.Client
+	redisClient         client.RedisClient
 	dcpCheckpointCommit func()
 	batchTicker         *time.Ticker
 	metric              *Metric
@@ -60,6 +59,10 @@ func (b *Bulk) StartBulk() {
 }
 
 func (b *Bulk) Close() {
+	b.flushLock.Lock()
+	b.isDcpRebalancing = true
+	b.flushLock.Unlock()
+
 	b.batchTicker.Stop()
 	if b.redisClient != nil {
 		b.redisClient.Close()
@@ -137,6 +140,6 @@ func (b *Bulk) PrepareEndRebalancing() {
 	b.isDcpRebalancing = false
 }
 
-func (b *Bulk) GetRedisConnection() *redisClient.Conn {
-	return b.redisClient.Conn()
+func (b *Bulk) GetRedisClient() client.RedisClient {
+	return b.redisClient
 }

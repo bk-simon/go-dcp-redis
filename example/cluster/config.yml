@@ -1,0 +1,19 @@
+hosts:
+  - localhost:8091
+username: user
+password: 123456
+bucketName: dcp-test
+logging:
+  level: info
+dcp:
+  group:
+    name: groupName
+redis:
+  cluster:
+    addrs:
+      - localhost:7000
+      - localhost:7001
+      - localhost:7002
+      - localhost:7003
+      - localhost:7004
+      - localhost:7005

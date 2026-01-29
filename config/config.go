@@ -16,6 +16,7 @@ type Redis struct {
 	BatchTickerDuration  time.Duration          `yaml:"batchTickerDuration"`
 	DefaultTTL           time.Duration          `yaml:"defaultTTL"`
 	Sentinel             *RedisSentinel         `yaml:"sentinel,omitempty"`
+	Cluster              *RedisCluster          `yaml:"cluster,omitempty"`
 }
 
 type RedisSentinel struct {
@@ -23,6 +24,15 @@ type RedisSentinel struct {
 	SentinelAddrs []string `yaml:"sentinelAddrs"`
 	Username      string   `yaml:"username,omitempty"`
 	Password      string   `yaml:"password,omitempty"`
+}
+
+type RedisCluster struct {
+	Addrs          []string `yaml:"addrs"`
+	Username       string   `yaml:"username,omitempty"`
+	Password       string   `yaml:"password,omitempty"`
+	RouteByLatency bool     `yaml:"routeByLatency,omitempty"`
+	RouteRandomly  bool     `yaml:"routeRandomly,omitempty"`
+	ReadOnly       bool     `yaml:"readOnly,omitempty"`
 }
 
 type CollectionKeyMapping struct {

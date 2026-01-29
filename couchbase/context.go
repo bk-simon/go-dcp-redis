@@ -6,7 +6,7 @@ import (
 )
 
 type Context struct {
-	Tracer    tracing.ListenerTrace
-	RedisConn *redis.Conn
-	Event     Event
+	Tracer      tracing.ListenerTrace
+	RedisClient redis.Cmdable
+	Event       Event
 }

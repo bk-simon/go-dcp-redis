@@ -61,3 +61,31 @@ jobs:
         env:
           INPUT_PUBLISH: false
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  integration-cluster:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.24"
+
+      - name: Start containers for Redis Cluster
+        run: docker compose up --wait --build --force-recreate --remove-orphans couchbase redis-cluster-1 redis-cluster-2 redis-cluster-3 redis-cluster-4 redis-cluster-5 redis-cluster-6 redis-cluster-init
+
+      - name: Docker status
+        run: sleep 60 && docker ps -a && docker logs go-dcp-redis-couchbase-1 && docker logs go-dcp-redis-redis-cluster-1-1
+
+      - name: Wait for Cluster
+        run: sleep 30 && docker logs go-dcp-redis-redis-cluster-1-1 && docker logs go-dcp-redis-redis-cluster-2-1 && docker logs go-dcp-redis-redis-cluster-3-1 && docker logs go-dcp-redis-redis-cluster-4-1 && docker logs go-dcp-redis-redis-cluster-5-1 && docker logs go-dcp-redis-redis-cluster-6-1
+
+      - name: Integration Test - Redis Cluster
+        run: cd test/integration && go test -v -run TestRedisCluster redis_cluster_integration_test.go common.go
+        env:
+          INPUT_PUBLISH: false
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

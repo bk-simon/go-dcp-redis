@@ -57,8 +57,8 @@ func (c *connector) listener(ctx *models.ListenerContext) {
 	listenerTrace := ctx.ListenerTracerComponent.InitializeListenerTrace("Listen", nil)
 	defer listenerTrace.Finish()
 
-	// Get redis conn
-	redisConn := c.bulk.GetRedisConnection()
+	// Get redis client
+	redisClient := c.bulk.GetRedisClient()
 
 	var e couchbase.Context
 	switch event := ctx.Event.(type) {
@@ -71,7 +71,7 @@ func (c *connector) listener(ctx *models.ListenerContext) {
 			Cas:            event.Cas,
 			VbID:           event.VbID,
 		}
-		e = couchbase.NewMutateEventContext(listenerTrace, redisConn, params)
+		e = couchbase.NewMutateEventContext(listenerTrace, redisClient, params)
 	case models.DcpExpiration:
 		params := couchbase.EventParams{
 			Key:            event.Key,
@@ -81,7 +81,7 @@ func (c *connector) listener(ctx *models.ListenerContext) {
 			Cas:            event.Cas,
 			VbID:           event.VbID,
 		}
-		e = couchbase.NewExpireEventContext(listenerTrace, redisConn, params)
+		e = couchbase.NewExpireEventContext(listenerTrace, redisClient, params)
 	case models.DcpDeletion:
 		params := couchbase.EventParams{
 			Key:            event.Key,
@@ -91,7 +91,7 @@ func (c *connector) listener(ctx *models.ListenerContext) {
 			Cas:            event.Cas,
 			VbID:           event.VbID,
 		}
-		e = couchbase.NewDeleteEventContext(listenerTrace, redisConn, params)
+		e = couchbase.NewDeleteEventContext(listenerTrace, redisClient, params)
 	default:
 		return
 	}
