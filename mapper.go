@@ -2,6 +2,7 @@ package dcpredis
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/Trendyol/go-dcp-redis/config"
 	"github.com/Trendyol/go-dcp-redis/couchbase"
@@ -13,9 +14,12 @@ type Mapper func(ctx couchbase.Context) []redis.Model
 var (
 	collectionKeyMappings *[]config.CollectionKeyMapping
 	mappingCache          = make(map[string]config.CollectionKeyMapping)
+	mappingCacheMu        sync.RWMutex
 )
 
 func SetCollectionKeyMappings(mappings *[]config.CollectionKeyMapping) {
+	mappingCacheMu.Lock()
+	defer mappingCacheMu.Unlock()
 	collectionKeyMappings = mappings
 	mappingCache = make(map[string]config.CollectionKeyMapping)
 }
@@ -36,6 +40,17 @@ func DefaultMapper(ctx couchbase.Context) []redis.Model {
 }
 
 func findCollectionKeyMapping(collectionName string) config.CollectionKeyMapping {
+	mappingCacheMu.RLock()
+	if mapping, exists := mappingCache[collectionName]; exists {
+		mappingCacheMu.RUnlock()
+		return mapping
+	}
+	mappingCacheMu.RUnlock()
+
+	mappingCacheMu.Lock()
+	defer mappingCacheMu.Unlock()
+
+	// Re-check after acquiring write lock to avoid duplicate writes.
 	if mapping, exists := mappingCache[collectionName]; exists {
 		return mapping
 	}
